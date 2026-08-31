@@ -3,7 +3,11 @@ import joblib
 import numpy as np
 
 # 모델 로드
-model = joblib.load('brix_model.joblib')
+try:
+    model = joblib.load('brix_model.joblib')
+except Exception as e:
+    st.error(f"모델 로드 실패: {e}")
+    st.stop()
 
 # 앱 제목
 st.title("🍊 제주도 성산지역 감귤 당도 예측 모델")
