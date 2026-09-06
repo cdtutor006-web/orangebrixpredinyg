@@ -1,6 +1,7 @@
 import streamlit as st
 import joblib
 import numpy as np
+from datetime import datetime
 
 # 모델 로드
 try:
@@ -18,6 +19,9 @@ st.write("아래의 기후 데이터를 입력하면 감귤의 당도(Brix)를 �
 
 # 입력 폼
 st.subheader("📊 기후 데이터 입력")
+
+if "prediction_history" not in st.session_state:
+    st.session_state.prediction_history = []
 
 col1, col2 = st.columns(2)
 
@@ -56,11 +60,9 @@ with col3:
 with col4:
     min_frost_temp = st.number_input(
         "최저 초상온도 (℃)",
-        min_value=-20.0,
-        max_value=20.0,
         value=-5.0,
         step=0.1,
-        help="가장 낮은 초상(서리) 온도"
+        help="가장 낮은 초상(서리) 온도. 학습 데이터 범위에 맞춰 입력하세요."
     )
 
 # 예측 버튼
@@ -89,6 +91,16 @@ if st.button("🔮 당도 예측하기", use_container_width=True):
         else:
             quality = "⚠️ 보통"
         st.metric("품질 평가", quality)
+
+        st.session_state.prediction_history.append({
+            "예측 시간": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "평균기온 (℃)": avg_temp,
+            "최저기온 (℃)": min_temp,
+            "가조시간 (시간)": sun_hours,
+            "최저 초상온도 (℃)": min_frost_temp,
+            "예측 당도 (Brix)": float(prediction),
+            "품질 평가": quality,
+        })
     
     # 입력값 요약
     st.markdown("**입력된 기후 데이터:**")
@@ -96,3 +108,12 @@ if st.button("🔮 당도 예측하기", use_container_width=True):
     st.write(f"- 최저기온: {min_temp}℃")
     st.write(f"- 가조시간: {sun_hours}시간")
     st.write(f"- 최저 초상온도: {min_frost_temp}℃")
+
+if st.session_state.prediction_history:
+    st.markdown("---")
+    st.subheader("📈 예측 결과 히스토리")
+    st.dataframe(st.session_state.prediction_history, use_container_width=True)
+
+    if st.button("🗑️ 히스토리 초기화"):
+        st.session_state.prediction_history = []
+        st.rerun()
